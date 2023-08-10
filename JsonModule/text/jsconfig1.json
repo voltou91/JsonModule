@@ -1,0 +1,44 @@
+{
+  "fr": {
+    "name": "Ceci est un {test1>10?wow:insane} {test2} {test3} {test4} {test5}",
+    "desc": {
+      "upper": "TRUC",
+      "lower": "truc"
+    },
+    "t": {
+      "a": [
+        {
+          "c": "d",
+          "e": "f"
+        },
+        {
+          "c": "h",
+          "e": "j"
+        }
+      ]
+    },
+    "letters": [ "a", "b", "c" ]
+  },
+  "en": {
+    "name": "This is a {test2}",
+    "desc": {
+      "upper": "TRUC",
+      "lower": "truc"
+    },
+    "t": {
+      "a": [
+        {
+          "c": "d",
+          "e": "f"
+        },
+        {
+          "g": "h",
+          "i": "j"
+        }
+      ]
+    },
+    "letters": [ 1, 2, 3 ]
+  },
+  "cost": 1000,
+  "upgradeNeeded": [ 0, 1, 2 ]
+}
