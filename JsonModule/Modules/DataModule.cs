@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using static JsonModule.Program;
+using JsonModule.Utils;
 
 namespace JsonModule.Modules
 {
@@ -39,7 +40,6 @@ namespace JsonModule.Modules
 
         protected virtual void FromObject(object? pObject, string currentKey = "")
         {
-            // Si c'est un array
             if (pObject is JArray JListValue)
             {
                 List<object> lList = new List<object>();
@@ -47,7 +47,6 @@ namespace JsonModule.Modules
                 {
                     if (lToken.Type == JTokenType.Object)
                     {
-                        // Si c'est un objet (dictionnaire), on le convertit en Dictionary<string, object>
                         lList.Add(lToken.ToObject<Dictionary<string, object>>());
                     }
                     else
@@ -58,7 +57,6 @@ namespace JsonModule.Modules
 
                 dataDict.Add(currentKey, lList);
             }
-            // Si c'est un dictionnaire du json
             else if (pObject is JObject JDictValue)
             {
                 foreach (KeyValuePair<string, JToken?> lDictValue in JDictValue)
@@ -143,8 +141,6 @@ namespace JsonModule.Modules
             return StringFormatter.Format(Get(pKey).ToString() ?? string.Empty, pReplacement);
         }
 
-
-        //Petit log avant de retourne un message d'erreur
         protected virtual string InvalidTranslation(string pKey)
         {
             if (testMode) Console.WriteLine($"{module}: invalid data {pKey}");

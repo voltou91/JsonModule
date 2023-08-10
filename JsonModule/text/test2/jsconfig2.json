@@ -4,13 +4,15 @@
     "desc": {
       "upper": "AUTRE TRUC",
       "lower": "autre truc"
-    }
+    },
+    "bonus":  "Hier, j'ai rencontré m{number>1?es:on} ami{number>1?s:}"
   },
   "en": {
     "name":  "This is another test",
     "desc": {
       "lower": "other thing"
-    }
+    },
+    "bonus":  "Yesterday, i met my friend{number>1?s:}"
   },
   "cost": 1000,
   "upgradeNeeded": [ 0, 1, 2 ]

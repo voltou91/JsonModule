@@ -1,13 +1,14 @@
 ﻿using System;
 
-namespace JsonModule
+namespace JsonModule.Utils
 {
     public static class RandomUtils
     {
-        // Comme ça on créé qu'une seule instance de Random, plutôt que de faire un new Random à chaque fois qu'on a besoin
+        // Create a single instance of Random instead of creating a new instance each time you call a function.
         private static Random random = new Random();
 
-        // Méthode d'extension, j'ai étendu à l'interface IEnumerable<T> la méthode "GetRandom", tout les types implémentant "IEnumerable<T>" auront cette méthode
+        // Extension method.
+        // All types implementing IEnumerable<T> will have access to this method.
         public static T? GetRandomElement<T>(this IEnumerable<T> pCollection)
         {
             int lCollectionCount = pCollection.Count();
@@ -18,7 +19,7 @@ namespace JsonModule
             return default;
         }
 
-        // Tire un booléen random en fonction d'un pourcentage, exemple Bool(0.45f) équivaut à 45% de chance d'avoir true
+        // Draws a Boolean random as a function of a percentage, e.g. Bool(0.45f) equals 45% chance of getting true
         public static bool Bool(float pPourcent) => random.NextSingle() < pPourcent;
 
         public static int RandInt(int pMin, int pMax = int.MaxValue) => random.Next(pMin, pMax);

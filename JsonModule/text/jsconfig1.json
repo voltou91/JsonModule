@@ -1,6 +1,6 @@
 {
   "fr": {
-    "name": "Ceci est un {test1>10?wow:insane} {test2} {test3} {test4} {test5}",
+    "name": "Ceci est un {test1>10?wow:insane}",
     "desc": {
       "upper": "TRUC",
       "lower": "truc"

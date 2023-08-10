@@ -2,36 +2,38 @@
 using static JsonModule.Cache;
 using static JsonModule.Program;
 using JsonModule.Modules;
-using System.IO;
+using JsonModule.Utils;
 
 namespace JsonModule
 {
     public static class Cache
     {
-        // Un cache à double niveau, si tu te demandes pourquoi pas à un niveau avec une clé du genre "moduleName + language" c'est parce que ça va rechercher dans n fichiers * n langues, alors qu'avec un double niveau de dictionnaire ça va rechercher dans n fichiers puis une fois le fichier trouvé, dans n langues
+        //A double-level cache, because a single-level dictionary with a key like "moduleName + language" will search n files * n languages, whereas a double-level cache will search n files then n languages.
         private static Dictionary<string, Dictionary<Language, TranslationModule>> translationsCache = new Dictionary<string, Dictionary<Language, TranslationModule>>();
 
         private static Dictionary<string, DataModule> datasCache = new Dictionary<string, DataModule>();
 
         private static Dictionary<string, OperatorModule> operatorCache = new Dictionary<string, OperatorModule>();
-        public static DataModule GetDatas(string pModule) => datasCache.TryGetValue(pModule, out DataModule? lModule) ? lModule : CreateData(pModule, GetFileText(pModule));
 
-        public static TranslationModule GetTranslation(string pModule, Language pLanguage) => translationsCache.TryGetValue(pModule, out Dictionary<Language, TranslationModule>? lDict) && lDict.TryGetValue(pLanguage, out TranslationModule? lModule) ? lModule : CreateTranslation(pModule, pLanguage, GetFileText(pModule));
 
-        public static OperatorModule GetOperator(string pModule, string pCondition) => operatorCache.TryGetValue(pModule, out OperatorModule? lOperator) ? lOperator : CreateOperator(pModule, pCondition);
+        public static DataModule GetDatas(string pModule) => datasCache.TryGetValue(pModule, out DataModule? lModule) ? lModule : CreateData(pModule, GetAndReadFileText(pModule));
+
+        public static TranslationModule GetTranslation(string pModule, Language pLanguage) => translationsCache.TryGetValue(pModule, out Dictionary<Language, TranslationModule>? lDict) && lDict.TryGetValue(pLanguage, out TranslationModule? lModule) ? lModule : CreateTranslation(pModule, pLanguage, GetAndReadFileText(pModule));
+
+        public static OperatorModule GetOperator(string pModule) => operatorCache.TryGetValue(pModule, out OperatorModule? lOperator) ? lOperator : CreateOperator(pModule);
 
         private static DataModule CreateData(string pModule, string pJsonContent) => datasCache[pModule] = new DataModule(pJsonContent, pModule);
 
         private static TranslationModule CreateTranslation(string pModule, Language pLanguage, string pJsonContent)
         {
-            // Si le module du fichier existe pas encore alors on créé une clé associer au fichier
+            // If the first cache level doesn't exist
             if (!translationsCache.ContainsKey(pModule)) translationsCache[pModule] = new Dictionary<Language, TranslationModule>();
 
             return translationsCache[pModule][pLanguage] = new TranslationModule(pJsonContent, pModule, pLanguage);
         }
-        private static OperatorModule CreateOperator(string pModule, string pCondition) => operatorCache[pModule] = new OperatorModule(pCondition);
+        private static OperatorModule CreateOperator(string pModule) => operatorCache[pModule] = new OperatorModule(pModule);
 
-        private static string GetFileText(string pPath)
+        private static string GetAndReadFileText(string pPath)
         {
             string lPath = Path.Exists(pPath) ? pPath : Path.Combine(PATH_TO_TEXT, pPath.Replace(FILE_SEPARATOR, Path.DirectorySeparatorChar)) + FILE_EXTENSION;
             if (File.Exists(lPath)) return File.ReadAllText(lPath);
@@ -39,38 +41,36 @@ namespace JsonModule
             return string.Empty;
         }
 
-        // On check si y a des différences entres les langues d'un même fichier
         public static void CheckMissingElements(List<TranslationModule> pTranslationModules)
         {
-            // C un peu comme une liste
+            // It's a bit like a list
             HashSet<string> allKeys = new HashSet<string>();
 
-            // Pour tout les modules qu'on demande de checker en paramètres
             foreach (TranslationModule lTranslationModule in pTranslationModules)
             {
-                // On ajoute toutes les keys avec UnionWith, UnionWith permet d'éviter les doublons donc on aura une sorte de liste avec tout les éléments de notre json sans doublons
+                // We add all the keys with UnionWith.
+                // UnionWith avoids duplicates, so we'll have a sort of list with all the keys in our json without duplicates.
                 allKeys.UnionWith(lTranslationModule.GetKeys());
             }
 
-            // Ensuite on reparcourt les modules en paramètres
             foreach (TranslationModule lTranslationModule in pTranslationModules)
             {
-                // On récupère à nouveau toutes les keys de notre module
+                // We get all the keys of our module
                 IEnumerable<string> lKeys = lTranslationModule.GetKeys();
 
-                // Puis pour notre espèce de liste on parcourt toutes les clés enregistrées
+                // Then, in our hashset, we go through all the registered keys
                 foreach (string lKey in allKeys)
                 {
-                    // Si il manque une clé
+                    // If a key is missing
                     if (!lKeys.Contains(lKey))
                     {
-                        // Parcourt toutes les langues
+                        // Browse all languages
                         foreach (Language lLanguage in Enum.GetValues(typeof(Language)))
                         {
-                            // Si une des langues contient la clé alors on log le fait que cette langue contient la clé mais pas celle qu'on vient de checker
+                            // If one of the modules has the key, then we log the fact that this language has the key but not the current one.
                             if (GetTranslation(lTranslationModule.module, lLanguage).GetKeys().Contains(lKey))
                             {
-                                if (testMode) Console.WriteLine($"{lTranslationModule.module}: \"{lKey}\" is present in {lLanguage} but not in {lTranslationModule.language}");
+                                Console.WriteLine($"{lTranslationModule.module}: \"{lKey}\" is present in {lLanguage} but not in {lTranslationModule.language}");
                             }
                         }
                     }
@@ -78,49 +78,55 @@ namespace JsonModule
             }
         }
 
+        /// <summary>
+        /// Preload all cache in all json file and check all missing elements
+        /// </summary>
         public static void PreloadAllCache()
         {
             if (testMode) Console.WriteLine("Preloading cache...");
             string lJsonContent;
             foreach (string fileToPreload in GetAllFilesInDirectory().ToArray())
             {
-                lJsonContent = GetFileText(fileToPreload);
+                lJsonContent = GetAndReadFileText(fileToPreload);
                 PreloadTranslationsCache(fileToPreload, lJsonContent);
                 PreloadDatasCache(fileToPreload, lJsonContent);
             }
             if (testMode) Console.WriteLine("Cache preloaded");
         }
 
-        // Utilise la récursivité pour parcourir tout les dossiers et dans chaque dossier tout les fichiers (ou dossiers)
         private static void PreloadTranslationsCache(string pFileToPreload, string pJsonContent)
         {
-            // Pour chaque fichier, on créé une liste de TranslationModule, on les initialise dans toutes les langues et on les ajoutes
+            // For each file, we create a list of TranslationModules, initialize all the modules in all the languages and add them to the list to check for missing elements between them.
             List<TranslationModule> lListTranslationModule = new List<TranslationModule>();
             foreach (Language lLanguage in Enum.GetValues(typeof(Language))) lListTranslationModule.Add(CreateTranslation(GetModuleName(pFileToPreload), lLanguage, pJsonContent));
+            if (!testMode) return;
 
-            // Puis on vérifie les différences entre tout les modules du fichier
             CheckMissingElements(lListTranslationModule);
         }
 
-        private static void PreloadDatasCache(string pFileToPreload, string pJsonContent)
+        private static void PreloadDatasCache(string pPathFile, string pJsonContent)
         {
-            CreateData(GetModuleName(Path.ChangeExtension(pFileToPreload, string.Empty)[..^1]), pJsonContent);
+            CreateData(GetModuleName(pPathFile), pJsonContent);
         }
 
-        private static string GetModuleName(string pPath) => pPath.Split(PATH_TO_TEXT)[1].Replace(Path.DirectorySeparatorChar, FILE_SEPARATOR);
-
-        private static IEnumerable<string> GetAllFilesInDirectory(string directoryPath = PATH_TO_TEXT)
+        private static string GetModuleName(string pPath)
         {
-            foreach (string file in Directory.GetFiles(directoryPath))
+            string lPath = Path.ChangeExtension(pPath, string.Empty)[..^1];
+            return lPath.Split(PATH_TO_TEXT)[1].Replace(Path.DirectorySeparatorChar, FILE_SEPARATOR);
+        }
+
+        private static IEnumerable<string> GetAllFilesInDirectory(string pDirectoryPath = PATH_TO_TEXT)
+        {
+            foreach (string lFile in Directory.GetFiles(pDirectoryPath))
             {
-                yield return file;
+                yield return lFile;
             }
 
-            foreach (string subDirectory in Directory.GetDirectories(directoryPath))
+            foreach (string lSubDirectory in Directory.GetDirectories(pDirectoryPath))
             {
-                foreach (string file in GetAllFilesInDirectory(subDirectory))
+                foreach (string lFile in GetAllFilesInDirectory(lSubDirectory))
                 {
-                    yield return file;
+                    yield return lFile;
                 }
             }
         }
@@ -128,7 +134,7 @@ namespace JsonModule
 
     public class Program
     {
-        public static bool testMode = true; // Changer cette ligne pour avoir les logs
+        public static bool testMode = false; // Change to true, to get the logs
 
         public const string FILE_EXTENSION = ".json";
 
@@ -136,7 +142,7 @@ namespace JsonModule
 
         public const string TRANSLATION_ERROR = "TRANSLATION ERROR";
 
-        public const string PATH_TO_TEXT = @"..\..\..\text\";
+        public const string PATH_TO_TEXT = @"..\..\..\Text\";
 
         public enum Language
         {
@@ -148,21 +154,23 @@ namespace JsonModule
 
         public static void Main()
         {
-            Console.WriteLine("fdez?depoz?fdepovfn?".GetNOccurrence('?', 2));
-            Console.WriteLine(StringFormatter.Format("salut {number>1?number<5?l'ami:my friend:number<-10?truc:non}", new Dictionary<string, object>() { { "number", -11 } }));
-            Console.WriteLine(StringFormatter.Format("test {boolean?yep:nop}truc", new Dictionary<string, object>() { { "boolean", true } }));
-            Console.WriteLine(StringFormatter.Format("test {boolean?yep:}truc", new Dictionary<string, object>() { { "boolean", false } }));
-            Console.WriteLine(StringFormatter.Format("test {boolean?:nop}truc", new Dictionary<string, object>() { { "boolean", true } }));
-
-            // Not necessary but preload all cache and check missing elements between languages
+            //Not necessary
             PreloadAllCache();
 
-            Console.WriteLine(StringFormatter.Format(GetTranslation("jsconfig1", Language.fr).GetAs("name"), new Dictionary<string, object>() { { "test1", "10" } }));
+            TranslationModule lTranslationModuleFR = GetTranslation("jsconfig1", Language.fr);
+            TranslationModule lTranslationModuleEN = GetTranslation("jsconfig1", Language.en);
 
-            Console.WriteLine(GetTranslation("test2.jsconfig2", Language.en).GetAs("desc.lower"));
-            Console.WriteLine(GetTranslation("jsconfig1", Language.fr).GetAsEnumerable<string>("letters").GetRandomElement());
-            Console.WriteLine(GetTranslation("jsconfig1", Language.en).Format("name", new Dictionary<string, object>() { { "test2", "YAY" } }));
-            Console.WriteLine(GetTranslation("jsconfig1", Language.fr).GetAsEnumerable<Dictionary<string, string>>("t.a").GetRandomElement()?["c"]);
+            Console.WriteLine(lTranslationModuleFR.GetAsEnumerable<string>("letters").GetRandomElement());
+            Console.WriteLine(lTranslationModuleFR.Format("name", new Dictionary<string, object>() { { "test1", "10" } }));
+            Console.WriteLine(lTranslationModuleFR.GetAsEnumerable<Dictionary<string, string>>("t.a").GetRandomElement()?["c"]);
+            
+            Console.WriteLine(lTranslationModuleEN.Format("name", new Dictionary<string, object>() { { "test2", "YAY" } }));
+
+            lTranslationModuleEN = GetTranslation("test2.jsconfig2", Language.en);
+            Console.WriteLine(lTranslationModuleEN.GetAs("desc.lower"));
+            Console.WriteLine(lTranslationModuleEN.Format("bonus", new Dictionary<string, object>() { {"number", 1} }));
+
+            Console.WriteLine(StringFormatter.Format("Hi {number>1?number<5?something:my friend:number<-10?people:what ?}", new Dictionary<string, object>() { { "number", -10 } }));
         }
     }
 }
