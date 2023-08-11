@@ -1,7 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
-using System;
 using static JsonModule.Program;
+using Newtonsoft.Json.Linq;
 
 namespace JsonModule.Modules
 {
@@ -15,14 +15,13 @@ namespace JsonModule.Modules
         {
             language = pLanguage;
 
-            // On récupère toutes les langues en tant que dictionnaire
-            Dictionary<string, object>? lDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(pJsonContent);
+            JObject lDict = JsonConvert.DeserializeObject(pJsonContent) as JObject ?? new JObject();
 
             // Si le dictionnaire a cette langue
-            if (lDict != null && lDict.TryGetValue(language.ToString(), out object? lValue))
+            if (lDict.TryGetValue(language.ToString(), out JToken? lValue))
             {
                 //On desérialise la langue en tant que Dictionnaire (important car les prochains dictionnaire seront du type "JObject") et on peut commencer la récursivité du FromObject
-                FromObject(JsonConvert.DeserializeObject(lValue.ToString() ?? string.Empty));
+                FromObject(lValue);
             }
             else
             {

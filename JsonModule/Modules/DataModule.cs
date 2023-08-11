@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using static JsonModule.Program;
@@ -21,14 +22,14 @@ namespace JsonModule.Modules
 
         protected virtual void Init(string pJsonContent, Language pLanguage)
         {
-            Dictionary<string, object>? lDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(pJsonContent);
-
+            JObject lObject = JsonConvert.DeserializeObject(pJsonContent) as JObject ?? new JObject();
+          
             foreach (Language lLanguage in Enum.GetValues(typeof(Language)))
             {
-                lDict?.Remove(lLanguage.ToString());
+                lObject.Remove(lLanguage.ToString());
             }
 
-            FromObject(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(lDict, Formatting.Indented)));
+            FromObject(lObject);
         }
 
         protected DataModule(string pModule)
@@ -38,37 +39,30 @@ namespace JsonModule.Modules
 
         public IEnumerable<string> GetKeys() => dataDict.Keys;
 
-        protected virtual void FromObject(object? pObject, string currentKey = "")
+        protected virtual void FromObject(JToken pObject, string currentKey = "")
         {
-            if (pObject is JArray JListValue)
+            if (pObject is JArray lArray)
             {
-                List<object> lList = new List<object>();
-                foreach (JToken lToken in JListValue)
-                {
-                    if (lToken.Type == JTokenType.Object)
-                    {
-                        lList.Add(lToken.ToObject<Dictionary<string, object>>());
-                    }
-                    else
-                    {
-                        lList.Add(lToken.ToString());
-                    }
-                }
-
-                dataDict.Add(currentKey, lList);
+                dataDict.Add(currentKey, AddToList(lArray));
             }
             else if (pObject is JObject JDictValue)
             {
                 foreach (KeyValuePair<string, JToken?> lDictValue in JDictValue)
                 {
-                    string newKey = string.IsNullOrEmpty(currentKey) ? lDictValue.Key : currentKey + FILE_SEPARATOR + lDictValue.Key;
-                    FromObject(lDictValue.Value, newKey);
+                    FromObject(lDictValue.Value ?? new JValue(0), string.IsNullOrEmpty(currentKey) ? lDictValue.Key : currentKey + FILE_SEPARATOR + lDictValue.Key);
                 }
             }
             else
             {
-                dataDict.Add(currentKey, pObject?.ToString() ?? string.Empty);
+                dataDict.Add(currentKey, pObject.ToString());
             }
+        }
+
+        private List<object> AddToList(JArray pArray)
+        {
+            List<object> lList = new List<object>();
+            foreach (JToken? lToken in pArray) lList.Add(lToken.ToString());
+            return lList;
         }
 
         private object Get(string pKey)
@@ -124,7 +118,7 @@ namespace JsonModule.Modules
         {
             try
             {
-                return (T)Get(pKey);
+                return (T)Convert.ChangeType(Get(pKey), typeof(T));
             }
             catch { }
             InvalidTranslation(pKey);

@@ -170,6 +170,9 @@ namespace JsonModule
             Console.WriteLine(lTranslationModuleEN.GetAs("desc.lower"));
             Console.WriteLine(lTranslationModuleEN.Format("bonus", new Dictionary<string, object>() { {"number", 1} }));
 
+            DataModule lDataModule = GetDatas("jsconfig1");
+            Console.WriteLine(lDataModule.GetAs<int>("cost"));
+
             Console.WriteLine(StringFormatter.Format("Hi {number>1?number<5?something:my friend:number<-10?people:what ?}", new Dictionary<string, object>() { { "number", -10 } }));
         }
     }
