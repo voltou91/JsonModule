@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace JsonModule.Modules
+﻿namespace JsonModule.Modules
 {
     public class OperatorModule
     {

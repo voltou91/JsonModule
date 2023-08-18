@@ -1,5 +1,4 @@
-﻿using System;
-using JsonModule.Modules;
+﻿using JsonModule.Modules;
 using System.Text.RegularExpressions;
 
 namespace JsonModule.Utils
@@ -23,7 +22,7 @@ namespace JsonModule.Utils
                 return lOperator.Resolve(pReplacements);
             }
             pReplacements.TryGetValue(lReplacement, out object? pValue);
-            return pValue?.ToString() ?? Program.TRANSLATION_ERROR;
+            return pValue?.ToString() ?? Program.TRANSLATION_NOT_FOUND;
         }
     }
 }

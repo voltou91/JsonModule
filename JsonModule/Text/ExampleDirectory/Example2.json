@@ -1,0 +1,9 @@
+{
+  "fr": {
+    "randomSentence": "Hier, j'ai rencontré m{number>1?es:on} ami{number>1?s:}"
+  },
+  "en": {
+    "randomSentence": "Yesterday, i met my friend{number>1?s:}",
+    "randomWord": "Hi"
+  }
+}

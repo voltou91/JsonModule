@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace JsonModule.Utils
+﻿namespace JsonModule.Utils
 {
     public static class RandomUtils
     {
@@ -9,14 +7,10 @@ namespace JsonModule.Utils
 
         // Extension method.
         // All types implementing IEnumerable<T> will have access to this method.
-        public static T? GetRandomElement<T>(this IEnumerable<T> pCollection)
+        public static T GetRandomElement<T>(this IEnumerable<T> pCollection)
         {
             int lCollectionCount = pCollection.Count();
-            if (lCollectionCount > 0)
-            {
-                return pCollection.ElementAt(random.Next(lCollectionCount));
-            }
-            return default;
+            return lCollectionCount > 0 ? pCollection.ElementAt(random.Next(lCollectionCount)) : default;
         }
 
         // Draws a Boolean random as a function of a percentage, e.g. Bool(0.45f) equals 45% chance of getting true

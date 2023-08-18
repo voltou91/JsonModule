@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace JsonModule.Utils
+﻿namespace JsonModule.Utils
 {
     public static class TextUtils
     {
@@ -15,9 +13,7 @@ namespace JsonModule.Utils
         public static int GetNOccurrence(this string pString, string pStringSearched, int pNb, int PIndex = 0)
         {
             int lIndex = pString.IndexOf(pStringSearched, PIndex);
-
-            if (pNb <= 1) return lIndex;
-            return pString.GetNOccurrence(pStringSearched, pNb - 1, lIndex + 1);
+            return pNb <= 1 ? lIndex : pString.GetNOccurrence(pStringSearched, pNb - 1, lIndex + 1);
         }
 
         /// <summary>
@@ -31,9 +27,7 @@ namespace JsonModule.Utils
         public static int GetNOccurrence(this string pString, char pCharSearched, int pNb, int PIndex = 0)
         {
             int lIndex = pString.IndexOf(pCharSearched, PIndex);
-
-            if (pNb <= 1) return lIndex;
-            return pString.GetNOccurrence(pCharSearched, pNb - 1, lIndex + 1);
+            return pNb <= 1 ? lIndex : pString.GetNOccurrence(pCharSearched, pNb - 1, lIndex + 1);
         }
     }
 }

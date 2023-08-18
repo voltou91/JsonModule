@@ -1,7 +1,6 @@
-﻿using System;
-using Newtonsoft.Json;
-using static JsonModule.Program;
+﻿using static JsonModule.Program;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Schema;
 
 namespace JsonModule.Modules
 {
@@ -15,24 +14,24 @@ namespace JsonModule.Modules
         {
             language = pLanguage;
 
-            JObject lDict = JsonConvert.DeserializeObject(pJsonContent) as JObject ?? new JObject();
+            JSchema lSchema = JSchema.Parse(pJsonContent);
 
             // Si le dictionnaire a cette langue
-            if (lDict.TryGetValue(language.ToString(), out JToken? lValue))
+            if (lSchema.ExtensionData.TryGetValue(language.ToString(), out JToken? lValue))
             {
                 //On desérialise la langue en tant que Dictionnaire (important car les prochains dictionnaire seront du type "JObject") et on peut commencer la récursivité du FromObject
-                FromObject(lValue);
+                MapJson(lValue);
             }
             else
             {
-                if (testMode) Console.WriteLine($"{module} not implement the language {language}");
+                if (testMode) Console.WriteLine($"[{module}] not implement the language {language}");
             }
         }
 
         //Petit log avant de retourne un message d'erreur
         protected override string InvalidTranslation(string pKey)
         {
-            if (testMode) Console.WriteLine($"{module}: invalid translation {pKey} in {language}");
+            if (testMode) Console.WriteLine($"[{module}]: invalid translation {pKey} in {language}");
             return base.InvalidTranslation(pKey);
         }
     }

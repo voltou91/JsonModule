@@ -1,5 +1,4 @@
-﻿using System;
-using static JsonModule.Cache;
+﻿using static JsonModule.Cache;
 using static JsonModule.Program;
 using JsonModule.Modules;
 using JsonModule.Utils;
@@ -35,7 +34,7 @@ namespace JsonModule
 
         private static string GetAndReadFileText(string pPath)
         {
-            string lPath = Path.Exists(pPath) ? pPath : Path.Combine(PATH_TO_TEXT, pPath.Replace(FILE_SEPARATOR, Path.DirectorySeparatorChar)) + FILE_EXTENSION;
+            string lPath = Path.Exists(pPath) ? pPath : Path.Combine(PATH_TO_TEXT_DIRECTORY, pPath.Replace(FILE_SEPARATOR, Path.DirectorySeparatorChar)) + FILE_EXTENSION;
             if (File.Exists(lPath)) return File.ReadAllText(lPath);
             if (testMode) Console.WriteLine($"The JSON file '{pPath}' was not found.");
             return string.Empty;
@@ -112,10 +111,10 @@ namespace JsonModule
         private static string GetModuleName(string pPath)
         {
             string lPath = Path.ChangeExtension(pPath, string.Empty)[..^1];
-            return lPath.Split(PATH_TO_TEXT)[1].Replace(Path.DirectorySeparatorChar, FILE_SEPARATOR);
+            return lPath.Split(PATH_TO_TEXT_DIRECTORY)[1].Replace(Path.DirectorySeparatorChar, FILE_SEPARATOR);
         }
 
-        private static IEnumerable<string> GetAllFilesInDirectory(string pDirectoryPath = PATH_TO_TEXT)
+        private static IEnumerable<string> GetAllFilesInDirectory(string pDirectoryPath = PATH_TO_TEXT_DIRECTORY)
         {
             foreach (string lFile in Directory.GetFiles(pDirectoryPath))
             {
@@ -134,16 +133,17 @@ namespace JsonModule
 
     public class Program
     {
-        public static bool testMode = false; // Change to true, to get the logs
+        public static bool testMode = true; // Change to true/false to able/disable logs
 
         public const string FILE_EXTENSION = ".json";
 
         public const char FILE_SEPARATOR = '.';
 
-        public const string TRANSLATION_ERROR = "TRANSLATION ERROR";
+        public const string TRANSLATION_NOT_FOUND = "TRANSLATION NOT FOUND";
 
-        public const string PATH_TO_TEXT = @"..\..\..\Text\";
+        public const string PATH_TO_TEXT_DIRECTORY = @"..\..\..\Text\";
 
+        // You can add new language here
         public enum Language
         {
             fr,
@@ -154,26 +154,26 @@ namespace JsonModule
 
         public static void Main()
         {
-            //Not necessary
-            PreloadAllCache();
+            // Not necessary but preload cache and check missing translations
+            //PreloadAllCache();
 
-            TranslationModule lTranslationModuleFR = GetTranslation("jsconfig1", Language.fr);
-            TranslationModule lTranslationModuleEN = GetTranslation("jsconfig1", Language.en);
+            TranslationModule lTranslationModuleFR = GetTranslation("Example1", Language.fr);
+            TranslationModule lTranslationModuleEN = GetTranslation("Example1", Language.en);
 
-            Console.WriteLine(lTranslationModuleFR.GetAsEnumerable<string>("letters").GetRandomElement());
-            Console.WriteLine(lTranslationModuleFR.Format("name", new Dictionary<string, object>() { { "test1", "10" } }));
-            Console.WriteLine(lTranslationModuleFR.GetAsEnumerable<Dictionary<string, string>>("t.a").GetRandomElement()?["c"]);
-            
-            Console.WriteLine(lTranslationModuleEN.Format("name", new Dictionary<string, object>() { { "test2", "YAY" } }));
+            Console.WriteLine(lTranslationModuleFR.GetAs("name"));
+            Console.WriteLine(lTranslationModuleEN.GetAs("desc.short"));
 
-            lTranslationModuleEN = GetTranslation("test2.jsconfig2", Language.en);
-            Console.WriteLine(lTranslationModuleEN.GetAs("desc.lower"));
-            Console.WriteLine(lTranslationModuleEN.Format("bonus", new Dictionary<string, object>() { {"number", 1} }));
+            DataModule lDataModule = GetDatas("Example1");
+            Console.WriteLine(lDataModule.GetAs<string[]>("attacksId").GetRandomElement());
 
-            DataModule lDataModule = GetDatas("jsconfig1");
-            Console.WriteLine(lDataModule.GetAs<int>("cost"));
-
+            // Here an example of using StringFormatter.Format to use condition in string
             Console.WriteLine(StringFormatter.Format("Hi {number>1?number<5?something:my friend:number<-10?people:what ?}", new Dictionary<string, object>() { { "number", -10 } }));
+
+            // Json file in directory need a "." separator
+            lTranslationModuleEN = GetTranslation("ExampleDirectory.Example2", Language.fr);
+
+            // You can use StringFormatter.Format directly from a Data/Translations Module
+            Console.WriteLine(lTranslationModuleEN.Format("randomSentence", new Dictionary<string, object>() { { "number", 1 } }));
         }
     }
 }
