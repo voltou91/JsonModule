@@ -23,32 +23,29 @@
         public OperatorModule(string pCondition)
         {
             int lIndexMark = pCondition.IndexOf('?');
-            string lCondition = pCondition.Substring(0, lIndexMark); //Extrait la condition (x>y) de la chaîne x>y?a:b
+            string lCondition = pCondition.Substring(0, lIndexMark); // Extract condition (x>y) from string x>y?a:b
             operatorValue = GetOperatorValue(lCondition); 
 
-            if (operatorValue == Operators.BOOL) // Si la condition est du format x?a:b
+            if (operatorValue == Operators.BOOL) // If the condition is of the format x?a:b
             {
                 booleanValue = lCondition;
             }
             else
             {
-                string[] lConditionValues = GetConditionValues(lCondition);
+                string[] lConditionValues = GetConditionValues(lCondition); // Extract x and y values ​​from condition x>y
                 leftConditionValue = lConditionValues[0];
                 rightConditionValue = lConditionValues[1];
             }
             
-            object[] lValues = GetValues(pCondition.Substring(lIndexMark + 1)); //Extrait les valeurs (a:b) de la chaîne x>y?a:b
+            object[] lValues = GetValues(pCondition.Substring(lIndexMark + 1)); // Extract values ​​a and b from the string x>y?a:b
             leftValue = lValues[0];
             rightValue = lValues[1];
         }
 
         private object GetModuleOrValue(string pValue)
         {
-            //Si dans notre valeur on détecte une condition ternaire
-            if (pValue.Contains('?') && pValue.Contains(':'))
-            {
-                return new OperatorModule(pValue);
-            }
+            // If in our value we detect a ternary condition
+            if (pValue.Contains('?') && pValue.Contains(':')) return new OperatorModule(pValue);
             return pValue;
         }
 
@@ -58,20 +55,20 @@
             return new object[2] { GetModuleOrValue(pCondition.Substring(0, lSeparator)), GetModuleOrValue(pCondition.Substring(lSeparator+1)) }; ;
         }
 
-        // Fonction pour connaître quel est l'emplacement du séparateur (:) dans une imbrication de condition ternaire
+        // Function to find out the location of the separator (:) in a ternary condition nesting
         private int GetSeparatorEmplacement(string pString)
         {
-            // Etant donné qu'on est dans les values (a:b), et non dans la condition, on a déjà un "?" d'ouvert. Donc lMarksCount vaut 1.
+            // lMarksCount is 1 because we are in the string a:b and not x>y?a:b
             int lMarksCount = 1;
 
-            // On parcours tout les char de nos values, si un nouveau "?" est trouvé alors c'est une condition ternaire imbriqué donc le prochain ":" on s'en fou
+            // If a "?" is found then the next ":" who cares
             for (int i = 0; i < pString.Length; i++)
             {
                 if (pString[i] == '?') lMarksCount++;
                 if (pString[i] == ':') lMarksCount--;
                 if (lMarksCount == 0) return i;
             }
-            //Une fois le lMarksCount à 0, c'est qu'on a trouvé notre emplacement, alors on le return.
+
             return -1;
         }
 
@@ -127,35 +124,29 @@
 
         private bool GetConditionResolve(Dictionary<string, object> pDict)
         {
-            if (operatorValue == Operators.BOOL)
-            {
-                return Convert.ToBoolean(pDict.TryGetValue(booleanValue, out object? pBool) ? pBool : booleanValue);
-            }
+            object GetDictObject(string pObject) => pDict.TryGetValue(pObject, out object? lObject) ? lObject : pObject;
 
-            int lLeft = Convert.ToInt32(pDict.TryGetValue(leftConditionValue, out object? pValue) ? pValue : leftConditionValue);
-            int lRight = Convert.ToInt32(pDict.TryGetValue(rightConditionValue, out pValue) ? pValue : rightConditionValue);
             switch (operatorValue)
             {
                 case Operators.BOOL:
-                    
+                    return Convert.ToBoolean(GetDictObject(booleanValue));
                 case Operators.EQUAL:
-                    return lLeft == lRight;
+                    return GetDictObject(leftConditionValue).ToString() == GetDictObject(rightConditionValue).ToString();
                 case Operators.NOT_EQUAL:
-                    return lLeft != lRight;
+                    return GetDictObject(leftConditionValue).ToString() != GetDictObject(rightConditionValue).ToString();
                 case Operators.SMALLER:
-                    return lLeft < lRight;
+                    return Convert.ToInt32(GetDictObject(leftConditionValue)) < Convert.ToInt32(GetDictObject(rightConditionValue));
                 case Operators.GREATER:
-                    return lLeft > lRight;
+                    return Convert.ToInt32(GetDictObject(leftConditionValue)) > Convert.ToInt32(GetDictObject(rightConditionValue));
                 case Operators.SMALLER_OR_EQUAL:
-                    return lLeft <= lRight;
+                    return Convert.ToInt32(GetDictObject(leftConditionValue)) <= Convert.ToInt32(GetDictObject(rightConditionValue));
                 case Operators.GREATER_OR_EQUAL:
-                    return lLeft >= lRight;
+                    return Convert.ToInt32(GetDictObject(leftConditionValue)) >= Convert.ToInt32(GetDictObject(rightConditionValue));
                 default:
                     return false;
             }
         }
 
-        // Fonction qui utilise la récursivité pour parcourir ses enfants "OperatorModule" si il y en a.
         public string Resolve(Dictionary<string, object> pDict)
         {
             if (GetConditionResolve(pDict))

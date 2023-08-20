@@ -1,0 +1,30 @@
+{
+  "fr": {
+    "Errors": {
+      "JsonFileNotFound": "Le fichier json \"{path}\" n'a pas été trouvé",
+      "KeyNotPresentInSpecificLanguage": "[{module}]: \"{key}\" est présent en \"{language}\" mais pas en \"{actualLanguage}\"",
+      "InvalidData": "[{module}]: donnée invalide \"{key}\"",
+      "InvalidTranslation": "[{module}]: traduction invalide \"{key}\" en \"{language}\"",
+      "BadConverting": "[Error]: Vous essayez de convertir \"{objectType}\" en \"{type}\" !",
+      "NotImplementLanguage": "[{module}] n'implémente pas la langue \"{language}\""
+    },
+    "Utils": {
+      "PreloadingCache": "\n########## Chargement du cache... ##########\n",
+      "CachePreloaded": "\n########## Cache chargé ! ##########\n"
+    }
+  },
+  "en": {
+    "Errors": {
+      "JsonFileNotFound": "The JSON file \"{path}\" was not found",
+      "KeyNotPresentInSpecificLanguage": "[{module}]: \"{key}\" is present in \"{language}\" but not in \"{actualLanguage}\"",
+      "InvalidData": "[{module}]: invalid data \"{key}\"",
+      "InvalidTranslation": "[{module}]: invalid translation \"{key}\" in \"{language}\"",
+      "BadConverting": "[Error]: You are trying to convert \"{objectType}\" to \"{type}\" !",
+      "NotImplementLanguage": "[{module}] not implement the language \"{language}\""
+    },
+    "Utils": {
+      "PreloadingCache": "\n########## Preloading cache... ##########\n",
+      "CachePreloaded": "\n########## Cache preloaded ! ##########\n"
+    }
+  }
+}

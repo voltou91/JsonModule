@@ -8,7 +8,7 @@ namespace JsonModule.Modules
 {
     public class DataModule
     {
-        protected Dictionary<string, object> dataDict = new Dictionary<string, object>();
+        protected Dictionary<string, object> datas = new Dictionary<string, object>();
         public string module { get; protected set; }
 
         public DataModule(string pJsonContent, string pModule, Language pLanguage = default)
@@ -17,6 +17,11 @@ namespace JsonModule.Modules
             if (string.IsNullOrEmpty(pJsonContent)) return;
 
             Init(pJsonContent, pLanguage);
+        }
+
+        protected DataModule(string pModule)
+        {
+            module = pModule;
         }
 
         protected virtual void Init(string pJsonContent, Language pLanguage)
@@ -30,30 +35,26 @@ namespace JsonModule.Modules
 
             foreach (KeyValuePair<string, JToken> lToken in lSchema.ExtensionData)
             {
-                dataDict.Add(lToken.Key, MapObject(lToken.Value));
+                datas.Add(lToken.Key, MapObject(lToken.Value));
             }
         }
 
-        protected DataModule(string pModule)
-        {
-            module = pModule;
-        }
+        public IEnumerable<string> GetKeys() => datas.Keys;
 
-        public IEnumerable<string> GetKeys() => dataDict.Keys;
-
+        #region Json Mapping
         protected virtual void MapJson(JToken pToken)
         {
             if (pToken is JArray lArray)
             {
-                dataDict.Add(lArray.Path, MapObject(lArray));
+                datas.Add(lArray.Path, MapObject(lArray));
             }
             else if (pToken is JContainer lObject)
             {
-                foreach (JToken item in lObject.Children()) MapJson(item);
+                foreach (JToken lToken in lObject.Children()) MapJson(lToken);
             }
             else if (pToken is JValue lValue)
             {
-                dataDict.Add(lValue.Path, lValue.Value);
+                datas.Add(lValue.Path, lValue.Value);
             }
         }
 
@@ -84,15 +85,15 @@ namespace JsonModule.Modules
                 {
                     lObjectDict.Add(lItem.Key, MapObject(lItem.Value));
                 }
+
                 if (!HasSameType(lObjectDict.Values, out Type lType)) return lObjectDict;
+                Type lDictType = typeof(Dictionary<,>).MakeGenericType(typeof(string), lType);
+                dynamic lDict = Activator.CreateInstance(lDictType) ?? new Dictionary<string, object>();
+                MethodInfo? lAddMethod = lDictType.GetMethod("Add");
 
-                Type dictionaryType = typeof(Dictionary<,>).MakeGenericType(typeof(string), lType);
-                dynamic lDict = Activator.CreateInstance(dictionaryType) ?? new Dictionary<string, object>();
-                MethodInfo? lAddMethod = dictionaryType.GetMethod("Add");
-
-                foreach (KeyValuePair<string, object> item in lObjectDict)
+                foreach (KeyValuePair<string, object> lKeyValuePair in lObjectDict)
                 {
-                    lAddMethod?.Invoke(lDict, new object[] { item.Key, item.Value });
+                    lAddMethod?.Invoke(lDict, new object[] { lKeyValuePair.Key, lKeyValuePair.Value });
                 }
                 return lDict;
             }
@@ -109,7 +110,7 @@ namespace JsonModule.Modules
                 lType = lValue?.GetType();
 
                 lElementType = lElementType ?? lType;
-               
+
                 if (lElementType != lType)
                 {
                     pType = typeof(object);
@@ -136,13 +137,20 @@ namespace JsonModule.Modules
                     return pValue.ToString();
             }
         }
+        #endregion
 
         private object Get(string pKey)
         {
-            dataDict.TryGetValue(pKey, out object? lObject);
+            datas.TryGetValue(pKey, out object? lObject);
             return lObject ?? InvalidTranslation(pKey);
         }
 
+        /// <summary>
+        /// Get the value of pKey as type T
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="pKey"></param>
+        /// <returns></returns>
         public T GetAs<T>(string pKey)
         {
             object lObject = Get(pKey);
@@ -156,16 +164,27 @@ namespace JsonModule.Modules
             }
             catch (Exception)
             {
-                Console.WriteLine($"[Error]: You are trying to convert \"{lObject.GetType()}\" to \"{typeof(T)}\" !");
+                if (TEST_MODE) Console.WriteLine(PROGRAM_TRANSLATIONS.Format("Errors.BadConverting", new Dictionary<string, object>() { {"objectType", lObject.GetType()}, {"type", typeof(T)} }));
                 return default;
             }
         }
 
+        /// <summary>
+        /// Get the translation of pKey
+        /// </summary>
+        /// <param name="pKey"></param>
+        /// <returns></returns>
         public string GetAs(string pKey)
         {
             return Get(pKey).ToString() ?? string.Empty;
         }
 
+        /// <summary>
+        /// Get the translation of pKey and use replacements on it
+        /// </summary>
+        /// <param name="pKey"></param>
+        /// <param name="pReplacement"></param>
+        /// <returns></returns>
         public string Format(string pKey, Dictionary<string, object> pReplacement)
         {
             return StringFormatter.Format(Get(pKey).ToString() ?? string.Empty, pReplacement);
@@ -173,7 +192,7 @@ namespace JsonModule.Modules
 
         protected virtual string InvalidTranslation(string pKey)
         {
-            if (testMode) Console.WriteLine($"[{module}]: invalid data {pKey}");
+            if (TEST_MODE) Console.WriteLine(PROGRAM_TRANSLATIONS.Format("Errors.InvalidData", new Dictionary<string, object>() { { "module", module }, { "key", pKey } }));
             return TRANSLATION_NOT_FOUND;
         }
     }

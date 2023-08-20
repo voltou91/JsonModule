@@ -13,7 +13,7 @@
             return lCollectionCount > 0 ? pCollection.ElementAt(random.Next(lCollectionCount)) : default;
         }
 
-        // Draws a Boolean random as a function of a percentage, e.g. Bool(0.45f) equals 45% chance of getting true
+        // Draws a Boolean random as a function of a percentage, for example Bool(0.45f) equals 45% chance of getting true
         public static bool Bool(float pPourcent) => random.NextSingle() < pPourcent;
 
         public static int RandInt(int pMin, int pMax = int.MaxValue) => random.Next(pMin, pMax);

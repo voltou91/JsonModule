@@ -8,31 +8,26 @@ namespace JsonModule.Modules
     {
         public Language language { get; private set; }
 
-        public TranslationModule(string jsonContent, string pModule, Language pLanguage) : base(jsonContent, pModule, pLanguage) { }
+        public TranslationModule(string pJsonContent, string pModule, Language pLanguage) : base(pJsonContent, pModule, pLanguage) { }
 
         protected override void Init(string pJsonContent, Language pLanguage)
         {
             language = pLanguage;
 
-            JSchema lSchema = JSchema.Parse(pJsonContent);
-
-            // Si le dictionnaire a cette langue
-            if (lSchema.ExtensionData.TryGetValue(language.ToString(), out JToken? lValue))
+            if (JSchema.Parse(pJsonContent).ExtensionData.TryGetValue(language.ToString(), out JToken? lValue))
             {
-                //On desérialise la langue en tant que Dictionnaire (important car les prochains dictionnaire seront du type "JObject") et on peut commencer la récursivité du FromObject
                 MapJson(lValue);
             }
-            else
+            else if (TEST_MODE)
             {
-                if (testMode) Console.WriteLine($"[{module}] not implement the language {language}");
+                Console.WriteLine(PROGRAM_TRANSLATIONS.Format("Errors.NotImplementLanguage", new Dictionary<string, object>() { { "module", module }, { "language", language } }));
             }
         }
 
-        //Petit log avant de retourne un message d'erreur
         protected override string InvalidTranslation(string pKey)
         {
-            if (testMode) Console.WriteLine($"[{module}]: invalid translation {pKey} in {language}");
-            return base.InvalidTranslation(pKey);
+            if (TEST_MODE) Console.WriteLine(PROGRAM_TRANSLATIONS.Format("Errors.InvalidTranslation", new Dictionary<string, object>() { { "module", module }, {"key", pKey}, { "language", language } }));
+            return TRANSLATION_NOT_FOUND;
         }
     }
 }
