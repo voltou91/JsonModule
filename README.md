@@ -41,7 +41,7 @@ You can add any language here to tell the program to look for that language in J
 
 # Operator Module
 
-OperatorModule handles ternary conditions in strings and overrides. For Example with this string "Good {day?morning:evening} !", OperatorModule will get the ternary condition and replace the good result. If day (boolean here) is true, the string displays "Good morning !". Your conditions can be of type x>y?a:b, and supports nesting of ternary conditions such as x>y?x'==y'?a:b:c.
+OperatorModule handles ternary conditions in strings and overrides. For Example with this string "Good {day?morning:evening} !", OperatorModule will get the ternary condition and replace the good result. If day (boolean here) is true, the string displays "Good morning !". Your conditions can be of type x>y?a:b, and supports nesting of ternary conditions such as x>y? x'==y'? a:b : c.
 
 # Cache
 
