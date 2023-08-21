@@ -18,12 +18,12 @@ namespace JsonModule
         #region Get Module
         public static DataModule GetDatas(string pModule) => datasCache.TryGetValue(pModule, out DataModule? lData) ? lData : CreateData(pModule, GetAndReadFileText(pModule));
 
-        public static TranslationModule GetTranslation(string pModule, Language pLanguage) => translationsCache.TryGetValue(pModule, out Dictionary<Language, TranslationModule>? lLanguages) && lLanguages.TryGetValue(pLanguage, out TranslationModule? lTranslation) ? lTranslation : CreateTranslation(pModule, pLanguage, GetAndReadFileText(pModule));
+        public static TranslationModule GetTranslation(string pModule, Language pLanguage) => GetTranslationLanguages(pModule).TryGetValue(pLanguage, out TranslationModule? lTranslation) ? lTranslation : CreateTranslation(pModule, pLanguage, GetAndReadFileText(pModule));
 
-        private static TranslationModule[] GetTranslations(string pModule)
+        private static Dictionary<Language, TranslationModule> GetTranslationLanguages(string pModule)
         {
             translationsCache.TryGetValue(pModule, out Dictionary<Language, TranslationModule>? lTranslations);
-            return lTranslations?.Values.ToArray() ?? new TranslationModule[0];
+            return lTranslations ?? new Dictionary<Language, TranslationModule>();
         }
 
         public static OperatorModule GetOperator(string pModule) => operatorCache.TryGetValue(pModule, out OperatorModule? lOperator) ? lOperator : CreateOperator(pModule);
@@ -74,33 +74,40 @@ namespace JsonModule
             if (TEST_MODE) CheckMissingElements(pModule);
         }
 
+        /// <summary>
+        /// Check for missing module key translations
+        /// </summary>
+        /// <param name="pModule"></param>
         public static void CheckMissingElements(string pModule)
         {
             // It's a bit like a list
             HashSet<string> lAllTranslationKeys = new HashSet<string>();
 
-            // UnionWith avoids duplicates, so we'll have a sort of list with all the keys in our json without duplicates.
-            foreach (TranslationModule lTranslation in GetTranslations(pModule)) lAllTranslationKeys.UnionWith(lTranslation.GetKeys());
+            TranslationModule[] lTranslationModules = GetTranslationLanguages(pModule).Values.ToArray();
 
-            foreach (TranslationModule lTranslationModule in GetTranslations(pModule))
+            // UnionWith avoids duplicates, so we'll have a sort of list with all the keys in our json without duplicates.
+            foreach (TranslationModule lTranslation in lTranslationModules) lAllTranslationKeys.UnionWith(lTranslation.GetKeys());
+
+            foreach (TranslationModule lTranslationModule in lTranslationModules)
             {
                 // Then we use Except fonction who return an enumerator of differents elements between two enumerator, here our lTranslationModule and our HashSet.
                 foreach (string lKey in lAllTranslationKeys.Except(lTranslationModule.GetKeys()))
                 {
                     // We check for each language who contains this lKey and log it
-                    foreach (Language lLanguage in Enum.GetValues(typeof(Language)))
+                    foreach (TranslationModule lModule in lTranslationModules)
                     {
-                        // This is not usefull to getTranslation with the language of our lTranslationModule because it return the instance of our lTranslationModule.
-                        if (lTranslationModule.language == lLanguage) continue;
+                        // This is not usefull to check whether it contains the key if the language of our lTranslationModule is the same as lModule, because it's the same instance.
+                        if (lTranslationModule.language == lModule.language) continue;
 
-                        if (GetTranslation(lTranslationModule.module, lLanguage).GetKeys().Contains(lKey))
+                        if (lModule.GetKeys().Contains(lKey))
                         {
-                            Console.WriteLine(PROGRAM_TRANSLATIONS.Format("Errors.KeyNotPresentInSpecificLanguage", new Dictionary<string, object>() { { "module", lTranslationModule.module }, {"key",lKey }, {"language",lLanguage}, {"actualLanguage",lTranslationModule.language} }));
+                            Console.WriteLine(PROGRAM_TRANSLATIONS.Format("Errors.KeyNotPresentInSpecificLanguage", new Dictionary<string, object>() { { "module", lTranslationModule.module }, { "key", lKey }, { "language", lModule.language }, { "actualLanguage", lTranslationModule.language } }));
                         }
                     }
                 }
             }
         }
+
 
         private static IEnumerable<string> GetAllFilesInDirectory(string pDirectoryPath = PATH_TO_TEXT_DIRECTORY)
         {
@@ -139,7 +146,7 @@ namespace JsonModule
 
         public const string PATH_TO_TEXT_DIRECTORY = @"..\..\..\Text\";
 
-        // You can add new language here
+        // You can add/remove languages here
         public enum Language
         {
             fr,

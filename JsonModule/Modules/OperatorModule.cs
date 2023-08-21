@@ -58,10 +58,10 @@
         // Function to find out the location of the separator (:) in a ternary condition nesting
         private int GetSeparatorEmplacement(string pString)
         {
-            // lMarksCount is 1 because we are in the string a:b and not x>y?a:b
+            // lMarksCount is 1 because we are in the string a:b and not x>y?a:b so we have already an "?" open
             int lMarksCount = 1;
 
-            // If a "?" is found then the next ":" who cares
+            // If a "?" is found then the next ":" is ignored
             for (int i = 0; i < pString.Length; i++)
             {
                 if (pString[i] == '?') lMarksCount++;
