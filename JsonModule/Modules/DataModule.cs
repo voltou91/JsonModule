@@ -1,4 +1,4 @@
-﻿using static JsonModule.Program;
+using static JsonModule.Program;
 using JsonModule.Utils;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Linq;
@@ -180,7 +180,7 @@ namespace JsonModule.Modules
         }
 
         /// <summary>
-        /// Get the translation of pKey and use replacements on it
+        /// Get the translation of pKey and do the necessary replacements on it
         /// </summary>
         /// <param name="pKey"></param>
         /// <param name="pReplacement"></param>

@@ -1,4 +1,4 @@
-﻿using static JsonModule.Cache;
+using static JsonModule.Cache;
 using static JsonModule.Program;
 using JsonModule.Modules;
 using JsonModule.Utils;
@@ -8,7 +8,7 @@ namespace JsonModule
     public static class Cache
     {
         // A double-level cache, because a single-level dictionary with a key like "moduleName + language" will search n files * n languages, whereas a double-level cache will search n files then n languages.
-        // For example there is 500 files and 3 languages, with a dictionary with one level there is 1500 possibilities but with a double-level dictionary there is 503 possibilities.
+        // For example there is 500 files and 3 languages, with a one level dictionary there is 1500 possibilities but with a double-level dictionary there is 503 possibilities.
         private static Dictionary<string, Dictionary<Language, TranslationModule>> translationsCache = new Dictionary<string, Dictionary<Language, TranslationModule>>();
 
         private static Dictionary<string, DataModule> datasCache = new Dictionary<string, DataModule>();
@@ -80,23 +80,23 @@ namespace JsonModule
         /// <param name="pModule"></param>
         public static void CheckMissingElements(string pModule)
         {
-            // It's a bit like a list
+            // It's like a list but with specialized features
             HashSet<string> lAllTranslationKeys = new HashSet<string>();
 
             TranslationModule[] lTranslationModules = GetTranslationLanguages(pModule).Values.ToArray();
 
-            // UnionWith avoids duplicates, so we'll have a sort of list with all the keys in our json without duplicates.
+            // UnionWith avoids duplicates, so we'll get a list with all the keys in our json without duplicates.
             foreach (TranslationModule lTranslation in lTranslationModules) lAllTranslationKeys.UnionWith(lTranslation.GetKeys());
 
             foreach (TranslationModule lTranslationModule in lTranslationModules)
             {
-                // Then we use Except fonction who return an enumerator of differents elements between two enumerator, here our lTranslationModule and our HashSet.
+                // Then we use Except fonction which return an enumerator of differents elements between two enumerator, here our lTranslationModule and our HashSet.
                 foreach (string lKey in lAllTranslationKeys.Except(lTranslationModule.GetKeys()))
                 {
-                    // We check for each language who contains this lKey and log it
+                    // We are checking in each languages who contains this lKey and then we log it
                     foreach (TranslationModule lModule in lTranslationModules)
                     {
-                        // This is not usefull to check whether it contains the key if the language of our lTranslationModule is the same as lModule, because it's the same instance.
+                        // This is not useful to check whether it contains the key in our lTranslationModule and lModule, because it's the same instance.
                         if (lTranslationModule.language == lModule.language) continue;
 
                         if (lModule.GetKeys().Contains(lKey))
@@ -132,10 +132,10 @@ namespace JsonModule
 
     public class Program
     {
-        // Change to true/false to able/disable logs
+        // Change to true/false to enable/disable the logs
         public static bool TEST_MODE = true; 
 
-        // Change language to change logs's language
+        // Change language to change logs's dialect
         public static TranslationModule PROGRAM_TRANSLATIONS = GetTranslation("ProgramTranslations", Language.en);
 
         public const string FILE_EXTENSION = ".json";
